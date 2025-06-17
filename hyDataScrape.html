@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYROX Data Scraper</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+        .control-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 2px solid #dee2e6;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .stop-btn {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+        }
+        .export-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+        .example-btn {
+            background: linear-gradient(45deg, #6c757d, #5a6268);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #cce7ff;
+            color: #004085;
+            border: 1px solid #99d3ff;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .progress-container {
+            margin: 20px 0;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .results-table th, .results-table td {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 12px;
+        }
+        .results-table th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+        }
+        .results-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .log-container {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 HYROX Data Scraper</h1>
+        
+        <div class="control-panel">
+            <div class="input-group">
+                <label for="baseUrl">🔗 HYROX Results URL:</label>
+                <input type="text" id="baseUrl" value="https://results.hyrox.com/season-8/?pidp=ranking_nav&pid=list_overall">
+            </div>
+            
+            <div class="input-group">
+                <label for="maxAthletes">👥 Maximum Athletes:</label>
+                <input type="number" id="maxAthletes" value="10" min="1" max="100">
+            </div>
+            
+            <div class="input-group">
+                <label for="delayMs">⏱️ Delay Between Requests (ms):</label>
+                <input type="number" id="delayMs" value="3000" min="1000" max="10000">
+            </div>
+            
+            <div class="button-group">
+                <button onclick="startScraping()" id="startBtn">🚀 Start Scraping</button>
+                <button onclick="stopScraping()" id="stopBtn" class="stop-btn" style="display:none;">⏹️ Stop</button>
+                <button onclick="exportCSV()" id="exportBtn" class="export-btn" style="display:none;">📥 Export CSV</button>
+                <button onclick="loadExample()" class="example-btn">📝 Example Data</button>
+                <button onclick="clearAll()" style="display:none;" id="clearBtn">🗑️ Clear</button>
+            </div>
+        </div>
+
+        <div id="statusArea"></div>
+        <div class="progress-container" id="progressContainer" style="display:none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+                <div class="progress-text" id="progressText">0%</div>
+            </div>
+        </div>
+        <div class="log-container" id="logContainer" style="display:none;">
+            <div id="logOutput"></div>
+        </div>
+        <div id="resultsContainer"></div>
+    </div>
+
+    <script>
+        let isActive = false;
+        let scrapedData = [];
+        const hyroxEvents = [
+            'Running 1', '1000m SkiErg', 'Running 2', '50m Sled Push',
+            'Running 3', '50m Sled Pull', 'Running 4', '80m Burpee Broad Jump',
+            'Running 5', '1000m Row', 'Running 6', '200m Farmers Carry',
+            'Running 7', '100m Sandbag Lunges', 'Running 8', 'Wall Balls'
+        ];
+
+        function showStatus(message, type = 'info') {
+            const area = document.getElementById('statusArea');
+            const spinner = type === 'info' && isActive ? '<div class="spinner"></div>' : '';
+            area.innerHTML = `<div class="status ${type}">${spinner}${message}</div>`;
+        }
+
+        function log(message) {
+            const container = document.getElementById('logContainer');
+            const output = document.getElementById('logOutput');
+            container.style.display = 'block';
+            const time = new Date().toLocaleTimeString();
+            output.innerHTML += `<div>[${time}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function updateProgress(current, total) {
+            const container = document.getElementById('progressContainer');
+            const fill = document.getElementById('progressFill');
+            const text = document.getElementById('progressText');
+            container.style.display = 'block';
+            const percent = Math.round((current / total) * 100);
+            fill.style.width = percent + '%';
+            text.textContent = `${percent}% (${current}/${total})`;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function timeToSeconds(timeStr) {
+            if (!timeStr || timeStr.includes('–')) return null;
+            const parts = timeStr.split(':');
+            if (parts.length === 2) {
+                return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            }
+            return null;
+        }
+
+        async function fetchWithProxy(url) {
+            log(`Attempting to fetch: ${url}`);
+            
+            const proxies = [
+                `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                `https://cors-anywhere.herokuapp.com/${url}`,
+                `https://thingproxy.freeboard.io/fetch/${url}`
+            ];
+            
+            try {
+                log('Trying direct fetch...');
+                const response = await fetch(url, {
+                    mode: 'no-cors',
+                    method: 'GET',
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    }
+                });
+            } catch (error) {
+                log(`Direct fetch failed: ${error.message}`);
+            }
+            
+            for (let i = 0; i < proxies.length; i++) {
+                const proxy = proxies[i];
+                try {
+                    log(`Trying proxy ${i + 1}/${proxies.length}: ${proxy.split('/')[2]}`);
+                    const response = await fetch(proxy, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const content = data.contents || data.data || data.response || '';
+                        if (content && content.length > 1000) { // Basic validation
+                            log(`✅ Proxy ${i + 1} successful, got ${content.length} characters`);
+                            return content;
+                        } else {
+                            log(`⚠️ Proxy ${i + 1} returned insufficient data`);
+                        }
+                    } else {
+                        log(`❌ Proxy ${i + 1} HTTP error: ${response.status}`);
+                    }
+                } catch (error) {
+                    log(`❌ Proxy ${i + 1} failed: ${error.message}`);
+                }
+                
+                if (i < proxies.length - 1) {
+                    await sleep(1000);
+                }
+            }
+            
+            throw new Error('All fetch methods failed - the website may be blocking requests');
+        }
+
+        function parseAthletes(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const athletes = [];
+            
+            const tableRows = doc.querySelectorAll('tr');
+            tableRows.forEach(row => {
+                const links = row.querySelectorAll('a[href*="content=detail"][href*="idp="]');
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    const name = link.textContent.trim();
+                    const idMatch = href.match(/idp=([^&]+)/);
+                    
+                    const skipItems = ['Race Results', 'Start List', 'Qualifying Slots', 'All Time Ranking', 
+                                     'Leaderboard', 'World Championship Qualifiers', 'Favorites', 'German'];
+                    
+                    if (idMatch && name && !skipItems.includes(name) && name.length > 0) {
+                        if (/[a-zA-Z]/.test(name) && !name.includes('Athlete')) {
+                            athletes.push({
+                                name: name,
+                                id: idMatch[1],
+                                url: href.startsWith('http') ? href : `https://results.hyrox.com/season-8/${href}`
+                            });
+                        }
+                    }
+                });
+            });
+            
+            if (athletes.length === 0) {
+                const nameLinks = doc.querySelectorAll('a[href*="idp="]');
+                nameLinks.forEach(link => {
+                    const href = link.getAttribute('href');
+                    const name = link.textContent.trim();
+                    const idMatch = href.match(/idp=([^&]+)/);
+                    
+                    if (idMatch && name && href.includes('content=detail')) {
+                        athletes.push({
+                            name: name || `Athlete_${idMatch[1]}`,
+                            id: idMatch[1],
+                            url: href.startsWith('http') ? href : `https://results.hyrox.com/season-8/${href}`
+                        });
+                    }
+                });
+            }
+            
+            log(`Raw athlete parsing found: ${athletes.map(a => a.name).join(', ')}`);
+            return athletes;
+        }
+
+        function parseResults(html, name) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const athlete = { name: name, data: {} };
+            const detailBoxes = doc.querySelectorAll('.detail-box');
+            let workoutTable = null;
+            
+            for (const box of detailBoxes) {
+                const heading = box.querySelector('h3');
+                if (heading && heading.textContent.includes('Workout Result')) {
+                    workoutTable = box.querySelector('table');
+                    break;
+                }
+            }
+            
+            if (!workoutTable) {
+                const tables = doc.querySelectorAll('table');
+                for (const table of tables) {
+                    const tableText = table.textContent;
+                    if (tableText.includes('Running') || tableText.includes('SkiErg') || 
+                        tableText.includes('Sled') || tableText.includes('Burpee')) {
+                        workoutTable = table;
+                        break;
+                    }
+                }
+            }
+            
+            if (workoutTable) {
+                const rows = workoutTable.querySelectorAll('tbody tr');
+                log(`Found ${rows.length} rows in workout table for ${name}`);
+                
+                rows.forEach(row => {
+                    const eventCell = row.querySelector('th.desc') || row.querySelector('th');
+                    const timeCell = row.querySelector('td');
+                    const placeCell = row.querySelectorAll('td')[1]; 
+                    
+                    if (eventCell && timeCell) {
+                        const event = eventCell.textContent.trim();
+                        const time = timeCell.textContent.trim();
+                        const place = placeCell ? placeCell.textContent.trim() : '';
+                        
+                        if (event && time && time.includes(':')) {
+                            athlete.data[event] = {
+                                time: time,
+                                place: place.includes('–') || place.includes('—') ? '' : place,
+                                seconds: timeToSeconds(time)
+                            };
+                            log(`Parsed: ${event} = ${time} (${place})`);
+                        }
+                    }
+                });
+            } else {
+                log(`No workout table found for ${name}`);
+                const allTables = doc.querySelectorAll('table');
+                log(`Found ${allTables.length} total tables`);
+                allTables.forEach((table, i) => {
+                    const firstRow = table.querySelector('tr');
+                    if (firstRow) {
+                        log(`Table ${i}: ${firstRow.textContent.substring(0, 100)}...`);
+                    }
+                });
+            }
+            
+            log(`Total events parsed for ${name}: ${Object.keys(athlete.data).length}`);
+            return athlete;
+        }
+
+        // Main scraping function
+        async function startScraping() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const maxAthletes = parseInt(document.getElementById('maxAthletes').value);
+            const delay = parseInt(document.getElementById('delayMs').value);
+            
+            if (!baseUrl) {
+                showStatus('Please enter a valid URL', 'error');
+                return;
+            }
+            
+            isActive = true;
+            scrapedData = [];
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'inline-block';
+            document.getElementById('clearBtn').style.display = 'inline-block';
+            
+            try {
+                showStatus('Fetching athlete list...', 'info');
+                log('Starting scraping process...');
+                
+                const mainHtml = await fetchWithProxy(baseUrl);
+                const athletes = parseAthletes(mainHtml);
+                
+                if (athletes.length === 0) {
+                    throw new Error('No athletes found');
+                }
+                
+                const toScrape = athletes.slice(0, maxAthletes);
+                log(`Found ${athletes.length} athletes, scraping ${toScrape.length}`);
+                
+                for (let i = 0; i < toScrape.length && isActive; i++) {
+                    const athlete = toScrape[i];
+                    showStatus(`Scraping ${athlete.name} (${i + 1}/${toScrape.length})`, 'info');
+                    updateProgress(i + 1, toScrape.length);
+                    log(`Processing: ${athlete.name}`);
+                    
+                    try {
+                        const athleteHtml = await fetchWithProxy(athlete.url);
+                        const athleteData = parseResults(athleteHtml, athlete.name);
+                        
+                        if (Object.keys(athleteData.data).length > 0) {
+                            scrapedData.push(athleteData);
+                            log(`✅ Success: ${athlete.name}`);
+                        } else {
+                            log(`⚠️ No data: ${athlete.name}`);
+                        }
+                    } catch (error) {
+                        log(`❌ Failed: ${athlete.name} - ${error.message}`);
+                    }
+                    
+                    if (i < toScrape.length - 1 && isActive) {
+                        await sleep(delay);
+                    }
+                }
+                
+                if (isActive) {
+                    showStatus(`Completed! Scraped ${scrapedData.length} athletes`, 'success');
+                    displayResults();
+                    document.getElementById('exportBtn').style.display = 'inline-block';
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+                log(`❌ Error: ${error.message}`);
+            } finally {
+                stopScraping();
+            }
+        }
+
+        function stopScraping() {
+            isActive = false;
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').style.display = 'none';
+        }
+
+        function displayResults() {
+            if (scrapedData.length === 0) return;
+            
+            const container = document.getElementById('resultsContainer');
+            const tableData = scrapedData.map(athlete => {
+                const row = { 'Name': athlete.name };
+                hyroxEvents.forEach(event => {
+                    const data = athlete.data[event];
+                    if (data) {
+                        row[`${event}_Time`] = data.time;
+                        row[`${event}_Place`] = data.place;
+                        row[`${event}_Seconds`] = data.seconds || '';
+                    }
+                });
+                return row;
+            });
+            
+            const headers = Object.keys(tableData[0]);
+            let html = '<h2>📊 Results</h2><table class="results-table"><thead><tr>';
+            headers.forEach(h => html += `<th>${h}</th>`);
+            html += '</tr></thead><tbody>';
+            
+            tableData.slice(0, 5).forEach(row => {
+                html += '<tr>';
+                headers.forEach(h => html += `<td>${row[h] || ''}</td>`);
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            
+            if (tableData.length > 5) {
+                html += `<p><em>... and ${tableData.length - 5} more athletes</em></p>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function generateCSV() {
+            if (scrapedData.length === 0) return '';
+            
+            const tableData = scrapedData.map(athlete => {
+                const row = { 'Name': athlete.name };
+                hyroxEvents.forEach(event => {
+                    const data = athlete.data[event];
+                    if (data) {
+                        row[`${event}_Time`] = data.time;
+                        row[`${event}_Place`] = data.place;
+                        row[`${event}_Seconds`] = data.seconds || '';
+                    }
+                });
+                return row;
+            });
+            
+            const headers = Object.keys(tableData[0]);
+            let csv = headers.join(',') + '\n';
+            tableData.forEach(row => {
+                const values = headers.map(h => {
+                    const val = row[h] || '';
+                    return val.includes(',') ? `"${val}"` : val;
+                });
+                csv += values.join(',') + '\n';
+            });
+            return csv;
+        }
+
+        function exportCSV() {
+            const csv = generateCSV();
+            if (!csv) {
+                showStatus('No data to export', 'error');
+                return;
+            }
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hyrox_data_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showStatus('CSV exported successfully!', 'success');
+        }
+
+        function loadExample() {
+            scrapedData = [{
+                name: "Example Athlete",
+                data: {
+                    "Running 1": { time: "00:03:39", place: "172", seconds: 219 },
+                    "1000m SkiErg": { time: "00:03:37", place: "75", seconds: 217 },
+                    "Running 2": { time: "00:03:34", place: "", seconds: 214 },
+                    "50m Sled Push": { time: "00:02:14", place: "747", seconds: 134 },
+                    "Running 3": { time: "00:03:28", place: "", seconds: 208 },
+                    "50m Sled Pull": { time: "00:03:07", place: "112", seconds: 187 },
+                    "Running 4": { time: "00:03:33", place: "", seconds: 213 },
+                    "80m Burpee Broad Jump": { time: "00:02:52", place: "1682", seconds: 172 },
+                    "Running 5": { time: "00:03:37", place: "", seconds: 217 },
+                    "1000m Row": { time: "00:03:57", place: "322", seconds: 237 },
+                    "Running 6": { time: "00:03:49", place: "", seconds: 229 },
+                    "200m Farmers Carry": { time: "00:01:28", place: "648", seconds: 88 },
+                    "Running 7": { time: "00:03:31", place: "", seconds: 211 },
+                    "100m Sandbag Lunges": { time: "00:03:39", place: "2117", seconds: 219 },
+                    "Running 8": { time: "00:03:58", place: "", seconds: 238 },
+                    "Wall Balls": { time: "00:03:27", place: "44", seconds: 207 }
+                }
+            }];
+            
+            displayResults();
+            document.getElementById('exportBtn').style.display = 'inline-block';
+            document.getElementById('clearBtn').style.display = 'inline-block';
+            showStatus('Example data loaded!', 'success');
+        }
+
+        function clearAll() {
+            scrapedData = [];
+            document.getElementById('resultsContainer').innerHTML = '';
+            document.getElementById('logOutput').innerHTML = '';
+            document.getElementById('logContainer').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('statusArea').innerHTML = '';
+            document.getElementById('exportBtn').style.display = 'none';
+            document.getElementById('clearBtn').style.display = 'none';
+            showStatus('Cleared all data', 'info');
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter' && !isActive) {
+                startScraping();
+            }
+            if (e.key === 'Escape' && isActive) {
+                stopScraping();
+            }
+        });
+    </script>
+</body>
+</html>
